@@ -7,7 +7,7 @@ import jakarta.persistence.*;
 public class Property {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)  // ← автоінкремент: 1, 2, 3...
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     private String address;
@@ -28,7 +28,7 @@ public class Property {
         this.description = description;
     }
 
-    // --- Getters та Setters ---
+    // --- Getters and Setters ---
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
