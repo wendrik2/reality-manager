@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Менеджер нерухомості</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: sans-serif; background: #f4f6f9; color: #333; padding: 24px; }
+        h1 { margin-bottom: 24px; font-size: 24px; }
+        h2 { margin-bottom: 12px; font-size: 18px; }
+
+        .form-card {
+          background: white; border-radius: 10px; padding: 20px;
+          max-width: 500px; margin-bottom: 32px; box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        .form-card input, .form-card textarea {
+          width: 100%; padding: 8px 10px; margin-bottom: 10px;
+          border: 1px solid #ddd; border-radius: 6px; font-size: 14px;
+        }
+        .form-card button {
+          background: #4f46e5; color: white; border: none;
+          padding: 10px 20px; border-radius: 6px; cursor: pointer; font-size: 14px;
+        }
+        .form-card button:hover { background: #4338ca; }
+
+        table { width: 100%; border-collapse: collapse; background: white;
+                border-radius: 10px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+        th { background: #4f46e5; color: white; padding: 12px; text-align: left; font-size: 14px; }
+        td { padding: 11px 12px; font-size: 14px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover td { background: #fafafa; }
+        .btn-delete { background: #ef4444; color: white; border: none;
+                      padding: 5px 12px; border-radius: 5px; cursor: pointer; font-size: 13px; }
+        .btn-delete:hover { background: #dc2626; }
+        .empty { text-align: center; color: #999; padding: 24px; }
+    </style>
+</head>
+<body>
+<h1>🏠 Менеджер нерухомості</h1>
+
+<div class="form-card">
+    <h2>Додати об'єкт</h2>
+    <input type="text"   id="address"     placeholder="Адреса">
+    <input type="number" id="price"       placeholder="Ціна (грн)">
+    <input type="number" id="rooms"       placeholder="Кількість кімнат">
+    <textarea            id="description" placeholder="Опис" rows="3"></textarea>
+    <button onclick="addProperty()">Додати</button>
+</div>
+
+<h2>Всі об'єкти</h2>
+<table>
+    <thead>
+    <tr>
+        <th>ID</th><th>Адреса</th><th>Ціна</th><th>Кімнати</th><th>Опис</th><th>Дія</th>
+    </tr>
+    </thead>
+    <tbody id="table-body">
+    <tr><td colspan="6" class="empty">Завантаження...</td></tr>
+    </tbody>
+</table>
+
+<script>
+    const API = '/api/properties';
+
+    async function loadProperties() {
+      const res = await fetch(API);
+      const data = await res.json();
+      const tbody = document.getElementById('table-body');
+
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">Немає об\'єктів</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${p.address}</td>
+          <td>${p.price?.toLocaleString()} ₴</td>
+          <td>${p.rooms}</td>
+          <td>${p.description || '—'}</td>
+          <td><button class="btn-delete" onclick="deleteProperty(${p.id})">Видалити</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function addProperty() {
+      const property = {
+        address:     document.getElementById('address').value,
+        price:       parseFloat(document.getElementById('price').value),
+        rooms:       parseInt(document.getElementById('rooms').value),
+        description: document.getElementById('description').value
+      };
+
+      if (!property.address || !property.price || !property.rooms) {
+        alert('Заповніть адресу, ціну та кількість кімнат');
+        return;
+      }
+
+      await fetch(API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(property)
+      });
+
+      ['address','price','rooms','description'].forEach(id =>
+        document.getElementById(id).value = ''
+      );
+
+      loadProperties();
+    }
+
+    async function deleteProperty(id) {
+      if (!confirm('Видалити цей об\'єкт?')) return;
+      await fetch(`${API}/${id}`, { method: 'DELETE' });
+      loadProperties();
+    }
+
+    loadProperties();
+</script>
+</body>
+</html>
